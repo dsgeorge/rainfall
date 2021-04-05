@@ -4,7 +4,7 @@ fetch('https://environment.data.gov.uk/flood-monitoring/id/stations/417417TP/rea
         })
         .then(function (text) {
                 let series = text;
-                console.log(series.items);
+                //console.log(series.items);
                 renderChart(series.items);
         })
         .catch(function (error) {
@@ -14,13 +14,13 @@ fetch('https://environment.data.gov.uk/flood-monitoring/id/stations/417417TP/rea
 
 
 function renderChart(series) {
-        JSC.Chart('chartDiv', {
-            series: series
-	    options: {
-		parsing: {
-		    xAxisKey: 'dateTime',
-		    yAxiskey: 'value'
-		}
-	    }
-        });
+    JSC.Chart('chartDiv', {
+	type: "line",
+        series: series,
+	parsing: {
+	    xAxisKey: 'dateTime',
+	    yAxiskey: 'value'
+	},
+	xAxis_scale_type: "time",
+    });
 }
