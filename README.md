@@ -1,2 +1,2 @@
 # rainfall
-graph rainfall using UK env agency data api and chartjs
+graph rainfall using UK env agency data api and jscharting
