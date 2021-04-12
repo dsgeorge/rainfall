@@ -12,11 +12,9 @@ import urllib
 station='417417TP'
 # Ham Island, Old Windsor: https://environment.data.gov.uk/flood-monitoring/id/stations/417417TP.html
 
-def readOrigData(station):
+def readOrigData(station,startdate,enddate):
     dates=[]
     totals=[]
-    startdate="2021-04-01"
-    enddate="2021-04-06"
     for d in pd.date_range(startdate,enddate):
         url = "http://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
         try:
@@ -29,28 +27,37 @@ def readOrigData(station):
         total=pd.to_numeric(df2.value,errors='coerce').sum()
         totals.append(total)
         dates.append(d)
-    print(d.date(),total)
+        print(d.date(),total)
     data={'date':dates,'rainfall':totals}
     return data
 
-#data=readOrigData(station)
-#df=pd.DataFrame.from_dict(data)
-#df.to_csv('rainfall_new.csv')
-#exit()
+import sys
+if len(sys.argv)>1 and sys.argv[1]=='readnew':
+    startdate="2021-04-08"
+    enddate="2021-04-10"
+    data=readOrigData(station,startdate,enddate)
+    df=pd.DataFrame.from_dict(data)
+    df.to_csv('rainfall_new.csv')
+    exit()
 ########
+
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 
 df=pd.read_csv('rainfall.csv',usecols=[1,2],index_col=0,parse_dates=True)
 
-fig,ax=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(8,6))
+(fig,ax)=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(8,6))
 
 #df.index=df.date
 title="Daily rainfall (mm) at station {}".format(station)
-df.plot(kind='line',title=title, ax=ax[0])
+#df.plot(kind='line',title=title, ax=ax[0])
+ax[0].bar(df.index,df['rainfall'])
+#ax[0].title=title
 #ax.figure.savefig('rainfall_daily.png')
 
 #title="Average daily rainfall (mm) per week at station {}".format(station)
-df.rainfall.resample('W').mean().plot(ax=ax[0])
+#df.rainfall.resample('W').mean().plot(ax=ax[0])
 #ax.figure.savefig('rainfall_weekm.png')
 
 #title="Total daily rainfall (mm) per week at station {}".format(station)
@@ -61,9 +68,10 @@ df.rainfall.resample('W').mean().plot(ax=ax[0])
 #df.rainfall.resample('M').mean().plot(ax=ax[0])
 #ax.figure.savefig('rainfall_monthm.png')
 
-ax[0].xaxis.set_major_locator(mdates.MonthLocator(byMonthDay=1))
+ax[0].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
+ax[0].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
 ax[0].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b-%y'))
-ax[0].legend(['Daily total','Mean per week'])
+#ax[0].legend(['Daily total','Mean per week'])
 ax[0].grid()
 
 
@@ -75,6 +83,7 @@ dfr=df[recent_start:]
 ax[1].bar(dfr.index,dfr['rainfall'])
 
 #set ticks every week
+ax[1].xaxis.set_major_locator(mdates.DayLocator(interval=14))
 ax[1].xaxis.set_major_locator(mdates.DayLocator(interval=7))
 #set major ticks format
 ax[1].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
