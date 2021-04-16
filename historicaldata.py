@@ -33,8 +33,8 @@ def readOrigData(station,startdate,enddate):
 
 import sys
 if len(sys.argv)>1 and sys.argv[1]=='readnew':
-    startdate="2021-04-08"
-    enddate="2021-04-10"
+    startdate="2021-04-05"
+    enddate="2021-04-13"
     data=readOrigData(station,startdate,enddate)
     df=pd.DataFrame.from_dict(data)
     df.to_csv('rainfall_new.csv')
@@ -65,15 +65,19 @@ ax[0].bar(df.index,df['rainfall'])
 #ax.figure.savefig('rainfall_weeks.png')
 
 #title="Average daily rainfall (mm) per month at station {}".format(station)
-#df.rainfall.resample('M').mean().plot(ax=ax[0])
+monthly=df.rainfall.resample('M').mean()
+monthly.columns=['mean']
+ax[0].plot(monthly.index,monthly.values,color='green')
 #ax.figure.savefig('rainfall_monthm.png')
 
 ax[0].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
 ax[0].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
 ax[0].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b-%y'))
-#ax[0].legend(['Daily total','Mean per week'])
-ax[0].grid()
-
+ax[0].legend(['Mean per week','Daily total'])
+ax[0].grid(axis='x',which='both')
+ax[0].grid(axis='y',which='major')
+ax[0].tick_params(axis='x', rotation=45)
+ax[0].title.set_text(title)
 
 # recent
 title="Recent daily rainfall (mm) at station {}".format(station)
@@ -84,27 +88,13 @@ ax[1].bar(dfr.index,dfr['rainfall'])
 
 #set ticks every week
 ax[1].xaxis.set_major_locator(mdates.DayLocator(interval=14))
-ax[1].xaxis.set_major_locator(mdates.DayLocator(interval=7))
+ax[1].xaxis.set_minor_locator(mdates.DayLocator(interval=7))
 #set major ticks format
 ax[1].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
-ax[1].grid(which='major')
-
-#ticklabels = ['']*len(dfr)
-##skip = len(dfr)//7
-#skip=7
-##ticklabels[::skip] = dfr.index[::skip].strftime('%Y-%m-%d')
-#ticklabels[::skip] = dfr.index[::skip].strftime('%b-%d')
-#ax[1].xaxis.set_major_formatter(mpl.ticker.FixedFormatter(ticklabels))
-#fig.autofmt_xdate()
-
-## fixes the tracker
-## https://matplotlib.org/users/recipes.html
-#def fmt(x, pos=0, max_i=len(ticklabels)-1):
-#    i = int(x) 
-#    i = 0 if i < 0 else max_i if i > max_i else i
-#    return dates[i]
-#ax[1].fmt_xdata = fmt
-
+ax[1].grid(axis='x',which='both')
+ax[1].grid(axis='y',which='major')
+ax[1].set_xlim([min(dfr.index),max(dfr.index)])
+ax[1].title.set_text(title)
 
 plt.tight_layout()
 fig.savefig('rainfall_plot.png')
