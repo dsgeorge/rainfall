@@ -9,12 +9,14 @@ mpl.use('Agg') # no X display
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import urllib
+import datetime
 station='417417TP'
 # Ham Island, Old Windsor: https://environment.data.gov.uk/flood-monitoring/id/stations/417417TP.html
 
 def readOrigData(station,startdate,enddate):
     dates=[]
     totals=[]
+    print("Trying to fetchg data for dates from",startdate,"to",enddate)
     for d in pd.date_range(startdate,enddate):
         url = "http://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
         try:
@@ -31,10 +33,20 @@ def readOrigData(station,startdate,enddate):
     data={'date':dates,'rainfall':totals}
     return data
 
+# read last line of file and work out the next day for a new data download
+def nextDay(filename):
+    with open(filename) as f:
+        for line in f:
+            pass
+        lastLine = line
+    lastDate=lastLine.split(',')[1]
+    theNextDay=pd.to_datetime(lastDate)+datetime.timedelta(days=1)
+    return str(theNextDay)
+
 import sys
 if len(sys.argv)>1 and sys.argv[1]=='readnew':
-    startdate="2021-04-05"
-    enddate="2021-04-13"
+    startdate=nextDay('rainfall.csv')
+    enddate=str(datetime.datetime.today().date())
     data=readOrigData(station,startdate,enddate)
     df=pd.DataFrame.from_dict(data)
     df.to_csv('rainfall_new.csv')
@@ -47,7 +59,7 @@ register_matplotlib_converters()
 
 df=pd.read_csv('rainfall.csv',usecols=[1,2],index_col=0,parse_dates=True)
 
-(fig,ax)=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(8,6))
+(fig,ax)=plt.subplots(nrows=3,ncols=1,sharex='none',figsize=(8,9))
 
 #df.index=df.date
 title="Daily rainfall (mm) at station {}".format(station)
@@ -95,6 +107,21 @@ ax[1].grid(axis='x',which='both')
 ax[1].grid(axis='y',which='major')
 ax[1].set_xlim([min(dfr.index),max(dfr.index)])
 ax[1].title.set_text(title)
+
+# dry days per month
+title="Number of dry days per month at station {}".format(station)
+dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: (x==0).sum())))
+#ax[2].bar(dfm.index,dfm.rainfall.drydays)
+dfm.index=dfm.index.strftime('%b-%y')
+dfm.plot.bar(ax=ax[2])
+#ax[2].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
+#ax[2].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
+#ax[2].xaxis.set_major_formatter(mdates.DateFormatter('%b-%y'))
+ax[2].legend(['Monthly rainfall in mm','Number of dry days'])
+#ax[2].grid(axis='x',which='both')
+ax[2].grid(axis='y',which='major')
+ax[2].tick_params(axis='x', rotation=45)
+ax[2].title.set_text(title)
 
 plt.tight_layout()
 fig.savefig('rainfall_plot.png')
