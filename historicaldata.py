@@ -16,7 +16,7 @@ station='417417TP'
 def readOrigData(station,startdate,enddate):
     dates=[]
     totals=[]
-    print("Trying to fetchg data for dates from",startdate,"to",enddate)
+    print("Trying to fetch data for dates from",startdate,"to",enddate)
     for d in pd.date_range(startdate,enddate):
         url = "http://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
         try:
