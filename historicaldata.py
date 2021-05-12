@@ -43,14 +43,15 @@ def nextDay(filename):
     theNextDay=pd.to_datetime(lastDate)+datetime.timedelta(days=1)
     return str(theNextDay)
 
-import sys
+import sys,shutil
 if len(sys.argv)>1 and sys.argv[1]=='readnew':
     startdate=nextDay('rainfall.csv')
     enddate=str(datetime.datetime.today().date())
     data=readOrigData(station,startdate,enddate)
     df=pd.DataFrame.from_dict(data)
-    df.to_csv('rainfall_new.csv')
-    exit()
+    shutil.copy('rainfall.csv','rainfall_old.csv')
+    df.to_csv('rainfall.csv',mode='a',header=False) # append to file
+    #exit()
 ########
 
 from pandas.plotting import register_matplotlib_converters
