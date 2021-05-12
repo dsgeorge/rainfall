@@ -52,6 +52,7 @@ if len(sys.argv)>1 and sys.argv[1]=='readnew':
     shutil.copy('rainfall.csv','rainfall_old.csv')
     df.to_csv('rainfall.csv',mode='a',header=False) # append to file
     #exit()
+    print("New data appended to file")
 ########
 
 from pandas.plotting import register_matplotlib_converters
@@ -129,4 +130,4 @@ ax[2].title.set_text(title)
 
 plt.tight_layout()
 fig.savefig('rainfall_plot.png')
-
+print("plot updated: rainfall_plot.png")
