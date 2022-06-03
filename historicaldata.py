@@ -2,7 +2,6 @@
 # read historical data CSVs, filter relevant station and sum total for day
 # write out in json format for graphing
 
-#import datetime
 import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg') # no X display
@@ -65,9 +64,9 @@ df=pd.read_csv('rainfall.csv',usecols=[1,2],index_col=0,parse_dates=True)
 (fig,ax)=plt.subplots(nrows=3,ncols=1,sharex='none',figsize=(8,9))
 
 #df.index=df.date
-title="Daily rainfall (mm) at station {}".format(station)
+#title="Daily rainfall (mm) at station {}".format(station)
 #df.plot(kind='line',title=title, ax=ax[0])
-ax[0].bar(df.index,df['rainfall'],width=1.0)
+#ax[0].bar(df.index,df['rainfall'],width=1.0)
 #ax[0].title=title
 #ax.figure.savefig('rainfall_daily.png')
 
@@ -80,40 +79,46 @@ ax[0].bar(df.index,df['rainfall'],width=1.0)
 #ax.figure.savefig('rainfall_weeks.png')
 
 #title="Average daily rainfall (mm) per month at station {}".format(station)
-monthly=df.rainfall.resample('M').mean()
-monthly.columns=['mean']
-ax[0].plot(monthly.index,monthly.values,color='green')
+#monthly=df.rainfall.resample('M').mean()
+#monthly.columns=['mean']
+#ax[0].plot(monthly.index,monthly.values,color='green')
 #ax.figure.savefig('rainfall_monthm.png')
 
-ax[0].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
-ax[0].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
-ax[0].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b-%y'))
-ax[0].legend(['Mean per week','Daily total'])
-ax[0].grid(axis='x',which='both')
-ax[0].grid(axis='y',which='major')
-ax[0].tick_params(axis='x', rotation=45)
-ax[0].title.set_text(title)
-ax[0].set_ylabel('mm')
+#ax[0].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=4))
+#ax[0].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
+#ax[0].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b-%y'))
+#ax[0].legend(['Mean per week','Daily total'])
+#ax[0].grid(axis='x',which='both')
+#ax[0].grid(axis='y',which='major')
+#ax[0].tick_params(axis='x', rotation=45)
+#ax[0].title.set_text(title)
+#ax[0].set_ylabel('mm')
 
-# recent
-title="Recent daily rainfall (mm) at station {}".format(station)
-recent_start='2021-01-01'
-dfr=df[recent_start:]
-#dfr.plot(kind='bar',title=title, ax=ax[1],legend=False)
-ax[1].bar(dfr.index,dfr['rainfall'])
+def dailybar(df,title,ax):
+    ax.bar(df.index,df['rainfall'])
+    #set ticks every week
+    ax.xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=1))
+    ax.xaxis.set_minor_locator(mdates.DayLocator(interval=7))
+    #set major ticks format
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
+    ax.grid(axis='x',which='both')
+    ax.grid(axis='y',which='major')
+    ax.set_xlim([min(df.index),max(df.index)])
+    ax.title.set_text(title)
+    ax.set_ylabel('mm')
 
-#set ticks every week
-ax[1].xaxis.set_major_locator(mdates.DayLocator(interval=14))
-ax[1].xaxis.set_minor_locator(mdates.DayLocator(interval=7))
-#set major ticks format
-ax[1].xaxis.set_major_formatter(mdates.DateFormatter('%d-%b'))
-ax[1].grid(axis='x',which='both')
-ax[1].grid(axis='y',which='major')
-ax[1].set_xlim([min(dfr.index),max(dfr.index)])
-ax[1].title.set_text(title)
-ax[1].set_ylabel('mm')
 
-# dry days per month
+
+# recent daily
+title="Daily rainfall (mm) at station {}".format(station)
+halfyearago=(datetime.datetime.now()-datetime.timedelta(days=183))
+oneyearago=(halfyearago-datetime.timedelta(days=183))
+range0=u" {}\u2014{}".format(oneyearago.strftime("%d%b%Y"),(halfyearago-datetime.timedelta(days=1)).strftime("%d%b%Y"))
+range1=u" {}\u2014{}".format(halfyearago.strftime("%d%b%Y"),(max(df.index)).to_pydatetime().strftime("%d%b%Y"))
+dailybar(df[oneyearago:halfyearago],title+range0,ax[0])
+dailybar(df[halfyearago:],title+range1,ax[1])
+
+# rain amount and dry days per month
 title="Number of dry days per month at station {}".format(station)
 #dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: (x==0).sum())))
 dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: 100.0*(x==0).sum()/x.count())))
