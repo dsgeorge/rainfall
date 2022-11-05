@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import urllib
 import datetime
+import calmap
+import numpy as np
 station='417417TP'
 # Ham Island, Old Windsor: https://environment.data.gov.uk/flood-monitoring/id/stations/417417TP.html
 
@@ -25,8 +27,18 @@ def readOrigData(station,startdate,enddate):
             print("No data for {}".format(d.date()))
             continue
     
-        df2=df[df.measure.str.contains(station)]
-        total=pd.to_numeric(df2.value,errors='coerce').sum()
+        df['fvalue']=pd.to_numeric(df.value,errors='coerce')
+        # data sanity check: should not have over 100 mm in a 15 min interval
+        # according to https://en.wikipedia.org/wiki/United_Kingdom_weather_records#Rainfall 
+        # the highest 5 min total in the UK is 32mm, and the highest 30 min total is 80 mm.
+        max_allowed=100. 
+        # values above max_allowed:
+        sus=df[(df.measure.str.contains(station)) & (df.fvalue>100.)]
+        if len(sus)>0:
+            print("WARNING: unfeasable suspicious data value(s) skipped",sus)
+        # filter out any suspicious values
+        df2=df[(df.measure.str.contains(station)) & (df.fvalue<=100.)]
+        total=df2.fvalue.sum()
         totals.append(total)
         dates.append(d)
         print(d.date(),total)
@@ -61,7 +73,8 @@ register_matplotlib_converters()
 
 df=pd.read_csv('rainfall.csv',usecols=[1,2],index_col=0,parse_dates=True)
 
-(fig,ax)=plt.subplots(nrows=3,ncols=1,sharex='none',figsize=(8,9))
+#(fig,ax)=plt.subplots(nrows=3,ncols=1,sharex='none',figsize=(8,10))
+(fig,ax)=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(8,7))
 
 #df.index=df.date
 #title="Daily rainfall (mm) at station {}".format(station)
@@ -107,33 +120,76 @@ def dailybar(df,title,ax):
     ax.title.set_text(title)
     ax.set_ylabel('mm')
 
+def calmapplot(df,title,ax):
+    pass
 
+# annual cummulative overlays
+def annualcumover(df,title,ax):
+    dfa=df.copy(deep=True)
+    dfa['year']=df.index.year
+    dfa['dayofyear']=df.index.dayofyear
+    table=pd.pivot_table(dfa,values=['rainfall'],index=['dayofyear'],columns=['year'])
+    table.cumsum(skipna=True).plot(ax=ax,use_index=True,legend=True)
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%d/%b'))
+    ax.title.set_text(title)
+    ax.set_ylabel('mm')
+    ax.xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=1))
+    ax.xaxis.set_minor_locator(mdates.DayLocator(interval=7))
+    ax.grid(axis='y',which='major')
+    ax.get_legend().set_title(None)
 
 # recent daily
-title="Daily rainfall (mm) at station {}".format(station)
-halfyearago=(datetime.datetime.now()-datetime.timedelta(days=183))
-oneyearago=(halfyearago-datetime.timedelta(days=183))
-range0=u" {}\u2014{}".format(oneyearago.strftime("%d%b%Y"),(halfyearago-datetime.timedelta(days=1)).strftime("%d%b%Y"))
-range1=u" {}\u2014{}".format(halfyearago.strftime("%d%b%Y"),(max(df.index)).to_pydatetime().strftime("%d%b%Y"))
-dailybar(df[oneyearago:halfyearago],title+range0,ax[0])
-dailybar(df[halfyearago:],title+range1,ax[1])
+#title="Daily rainfall (mm) at station {}".format(station)
+#halfyearago=(datetime.datetime.now()-datetime.timedelta(days=183))
+#oneyearago=(halfyearago-datetime.timedelta(days=183))
+#range0=u" {}\u2014{}".format(oneyearago.strftime("%d%b%Y"),(halfyearago-datetime.timedelta(days=1)).strftime("%d%b%Y"))
+#range1=u" {}\u2014{}".format(halfyearago.strftime("%d%b%Y"),(max(df.index)).to_pydatetime().strftime("%d%b%Y"))
+#dailybar(df[oneyearago:halfyearago],title+range0,ax[0])
+#dailybar(df[halfyearago:],title+range1,ax[1])
+
+# cumsum years overlayed
+title="Annual rainfall cumulative sum (mm) at station {}".format(station)
+annualcumover(df,title,ax[0])
 
 # rain amount and dry days per month
 title="Number of dry days per month at station {}".format(station)
 #dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: (x==0).sum())))
 dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: 100.0*(x==0).sum()/x.count())))
-#ax[2].bar(dfm.index,dfm.rainfall.drydays)
-dfm.index=dfm.index.strftime('%b-%y')
-dfm.plot.bar(ax=ax[2],secondary_y='drydays',width=0.8)
-#ax[2].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
-#ax[2].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
-#ax[2].xaxis.set_major_formatter(mdates.DateFormatter('%b-%y'))
-ax[2].legend(['Monthly rainfall in mm','Percentage of dry days'])
-ax[2].set_ylabel('mm or %')
-ax[2].grid(axis='y',which='major')
-ax[2].tick_params(axis='x', rotation=45)
-ax[2].title.set_text(title)
+#ax[1].bar(dfm.index,dfm.rainfall.drydays)
+dfm.index=dfm.index.strftime('%b/%y')
+print(dfm)
+dfm.plot.bar(ax=ax[1],secondary_y='drydays',width=0.8)
+#ax[1].xaxis.set_major_locator(mdates.MonthLocator(bymonthday=1,interval=2))
+#ax[1].xaxis.set_minor_locator(mdates.MonthLocator(bymonthday=1,interval=1))
+#ax[1].xaxis.set_major_formatter(mdates.DateFormatter('%b-%y'))
+ax[1].legend(['Monthly rainfall in mm','Percentage of dry days'])
+ax[1].set_ylabel('mm or %')
+ax[1].grid(axis='y',which='major')
+ax[1].tick_params(axis='x', rotation=45)
+ax[1].title.set_text(title)
 
 plt.tight_layout()
 fig.savefig('rainfall_plot.png')
 print("plot updated: rainfall_plot.png")
+
+#
+#(fig,ax)=plt.subplots(nrows=8,ncols=1,sharex=True,figsize=(8,10))
+#plt.matshow(ax=ax[0])
+
+# plot frequency distribution of daily rainfall to guide choice of colormap boundaries
+(fig,ax)=plt.subplots(nrows=1,ncols=1,sharex='none',figsize=(8,10))
+df.rainfall.plot.hist(bins=int(df.rainfall.max()),ax=ax,logy=True)
+fig.savefig('rainfall_freq.png')
+
+# threshold in mm of rain for day to be coloured blue in calmap
+threshold=5
+#turn rainfall into integer, seems to work better for color mapping
+dfc=df.copy(deep=True)
+dfc['irainfall']=dfc.rainfall.astype(np.int64)
+cmap=mpl.colors.ListedColormap(['white','blue'])
+boundaries=[0,threshold,100]
+norm=mpl.colors.BoundaryNorm(boundaries, cmap.N, clip=True)
+norm.autoscale(boundaries)
+(fig,ax)=calmap.calendarplot(dfc.irainfall,cmap=cmap,norm=norm)
+#plt.tight_layout()
+fig.savefig('rainfall_calmap.png')
