@@ -177,7 +177,7 @@ print("plot updated: rainfall_plot.png")
 #plt.matshow(ax=ax[0])
 
 # plot frequency distribution of daily rainfall to guide choice of colormap boundaries
-(fig,ax)=plt.subplots(nrows=1,ncols=1,sharex='none',figsize=(8,10))
+(fig,ax)=plt.subplots(nrows=1,ncols=1,sharex='none',figsize=(12,15))
 df.rainfall.plot.hist(bins=int(df.rainfall.max()),ax=ax,logy=True)
 fig.savefig('rainfall_freq.png')
 
@@ -190,6 +190,6 @@ cmap=mpl.colors.ListedColormap(['white','blue'])
 boundaries=[0,threshold,100]
 norm=mpl.colors.BoundaryNorm(boundaries, cmap.N, clip=True)
 norm.autoscale(boundaries)
-(fig,ax)=calmap.calendarplot(dfc.irainfall,cmap=cmap,norm=norm)
+(fig,ax)=calmap.calendarplot(dfc.irainfall,norm=norm,cmap=cmap,dayticks=[0, 2, 4, 6],yearlabel_kws={'fontsize':'xx-large','fontfamily':'sans-serif'},yearascending=False)
 #plt.tight_layout()
 fig.savefig('rainfall_calmap.png')
