@@ -7,7 +7,7 @@ import matplotlib as mpl
 mpl.use('Agg') # no X display
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import urllib
+import urllib, urllib.error
 import datetime
 import calmap
 import numpy as np
@@ -22,7 +22,8 @@ def readOrigData(station,startdate,enddate):
         url = "http://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
         dtype={'dateTime':str, 'measure':str, 'value':object}
         try:
-            df=pd.read_csv(url,dtype=dtype,error_bad_lines=False,warn_bad_lines=True)
+#            df=pd.read_csv(url,dtype=dtype,error_bad_lines=False,warn_bad_lines=True)
+             df=pd.read_csv(url,dtype=dtype,on_bad_lines='warn')
         except urllib.error.HTTPError:
             print("No data for {}".format(d.date()))
             continue
