@@ -185,12 +185,12 @@ fig.savefig('rainfall_freq.png')
 # threshold in mm of rain for day to be coloured blue in calmap
 threshold=5
 #turn rainfall into integer, seems to work better for color mapping
-dfc=df.copy(deep=True)
-dfc['irainfall']=dfc.rainfall.astype(np.int64)
-cmap=mpl.colors.ListedColormap(['white','blue'])
-boundaries=[0,threshold,100]
-norm=mpl.colors.BoundaryNorm(boundaries, cmap.N, clip=True)
-norm.autoscale(boundaries)
-(fig,ax)=calmap.calendarplot(dfc.irainfall,norm=norm,cmap=cmap,dayticks=[0, 2, 4, 6],yearlabel_kws={'fontsize':'xx-large','fontfamily':'sans-serif'},yearascending=False)
+#dfc=df.copy(deep=True)
+#dfc['irainfall']=dfc.rainfall.astype(np.int64)
+#cmap=mpl.colors.ListedColormap(['white','blue'])
+#boundaries=[0,threshold,100]
+#norm=mpl.colors.BoundaryNorm(boundaries, cmap.N, clip=True)
+#norm.autoscale(boundaries)
+#(fig,ax)=calmap.calendarplot(dfc.irainfall,norm=norm,cmap=cmap,dayticks=[0, 2, 4, 6],yearlabel_kws={'fontsize':'xx-large','fontfamily':'sans-serif'},yearascending=False)
 #plt.tight_layout()
-fig.savefig('rainfall_calmap.png')
+#fig.savefig('rainfall_calmap.png')
