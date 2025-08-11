@@ -19,7 +19,7 @@ def readOrigData(station,startdate,enddate):
     totals=[]
     print("Trying to fetch data for dates from",startdate,"to",enddate)
     for d in pd.date_range(startdate,enddate):
-        url = "http://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
+        url = "https://environment.data.gov.uk/flood-monitoring/archive/readings-{:04d}-{:02d}-{:02d}.csv".format(d.year,d.month,d.day)
         dtype={'dateTime':str, 'measure':str, 'value':object}
         try:
 #            df=pd.read_csv(url,dtype=dtype,error_bad_lines=False,warn_bad_lines=True)
@@ -73,9 +73,11 @@ register_matplotlib_converters()
 
 
 df=pd.read_csv('rainfall.csv',usecols=[1,2],index_col=0,parse_dates=True)
+start=datetime.datetime(2020,1,2)
+df=df[df.index>=start]
 
 #(fig,ax)=plt.subplots(nrows=3,ncols=1,sharex='none',figsize=(8,10))
-(fig,ax)=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(8,7))
+(fig,ax)=plt.subplots(nrows=2,ncols=1,sharex='none',figsize=(10,7))
 
 #df.index=df.date
 #title="Daily rainfall (mm) at station {}".format(station)
