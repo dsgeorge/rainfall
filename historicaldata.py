@@ -154,10 +154,10 @@ def annualcumover(df,title,ax):
 title="Annual rainfall cumulative sum (mm) at station {}".format(station)
 annualcumover(df,title,ax[0])
 
-# rain amount and dry days per month
+# rain amount and dry days per month: ME is the Month End frequence grouper.
 title="Number of dry days per month at station {}".format(station)
-#dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: (x==0).sum())))
-dfm=df.groupby(pd.Grouper(freq='M')).agg((('total','sum'),('drydays',lambda x: 100.0*(x==0).sum()/x.count())))
+#dfm=df.groupby(pd.Grouper(freq='ME')).agg((('total','sum'),('drydays',lambda x: (x==0).sum())))
+dfm=df.groupby(pd.Grouper(freq='ME')).agg((('total','sum'),('drydays',lambda x: 100.0*(x==0).sum()/x.count())))
 #ax[1].bar(dfm.index,dfm.rainfall.drydays)
 dfm.index=dfm.index.strftime('%b/%y')
 print(dfm)
